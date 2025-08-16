@@ -9,16 +9,18 @@ class ModuleGenerator
 {
     protected $files;
     protected $basePath;
+    protected $modulesPath;
 
     public function __construct(Filesystem $files)
     {
         $this->files = $files;
         $this->basePath = base_path();
+        $this->modulesPath = $this->getModulesPath();
     }
 
     public function generate(string $vendor, string $moduleName): void
     {
-        $moduleDir = $this->basePath . '/modules/' . $moduleName;
+        $moduleDir = $this->basePath . '/' . $this->modulesPath . '/' . $moduleName;
         
         if ($this->files->exists($moduleDir)) {
             throw new \Exception("Module {$moduleName} already exists");
@@ -173,12 +175,12 @@ class ModuleGenerator
 
         $moduleRepo = [
             'type' => 'path',
-            'url' => './modules/*'
+            'url' => './' . $this->modulesPath . '/*'
         ];
 
         $exists = false;
         foreach ($composer['repositories'] as $repo) {
-            if (isset($repo['url']) && $repo['url'] === './modules/*') {
+            if (isset($repo['url']) && $repo['url'] === './' . $this->modulesPath . '/*') {
                 $exists = true;
                 break;
             }
@@ -198,5 +200,18 @@ class ModuleGenerator
             $composerPath,
             json_encode($composer, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
         );
+    }
+
+    protected function getModulesPath(): string
+    {
+        $composerPath = $this->basePath . '/composer.json';
+        
+        if (!$this->files->exists($composerPath)) {
+            return 'modules';
+        }
+
+        $composer = json_decode($this->files->get($composerPath), true);
+        
+        return $composer['extra']['laravel-module']['path'] ?? 'modules';
     }
 }
