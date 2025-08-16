@@ -214,4 +214,54 @@ class ModuleGenerator
         
         return $composer['extra']['laravel-module']['path'] ?? 'modules';
     }
+
+    public function updatePhpunitXml(string $vendor, string $moduleName): void
+    {
+        $phpunitPath = $this->basePath . '/phpunit.xml';
+        
+        if (!$this->files->exists($phpunitPath)) {
+            return;
+        }
+
+        $xmlContent = $this->files->get($phpunitPath);
+        $dom = new \DOMDocument();
+        $dom->preserveWhiteSpace = false;
+        $dom->formatOutput = true;
+        
+        if (!$dom->loadXML($xmlContent)) {
+            throw new \Exception('Invalid phpunit.xml format');
+        }
+
+        $xpath = new \DOMXPath($dom);
+        
+        $testsuites = $xpath->query('//testsuites');
+        if ($testsuites->length === 0) {
+            $phpunit = $dom->documentElement;
+            $testsuites = $dom->createElement('testsuites');
+            $phpunit->appendChild($testsuites);
+        } else {
+            $testsuites = $testsuites->item(0);
+        }
+
+        $moduleTestsPath = './' . $this->modulesPath . '/' . $moduleName . '/tests';
+        
+        $featureTestsuite = $dom->createElement('testsuite');
+        $featureTestsuite->setAttribute('name', ucfirst($moduleName) . ' Feature');
+        $featureDirectory = $dom->createElement('directory');
+        $featureDirectory->setAttribute('suffix', 'Test.php');
+        $featureDirectory->nodeValue = $moduleTestsPath . '/Feature';
+        $featureTestsuite->appendChild($featureDirectory);
+        
+        $unitTestsuite = $dom->createElement('testsuite');
+        $unitTestsuite->setAttribute('name', ucfirst($moduleName) . ' Unit');
+        $unitDirectory = $dom->createElement('directory');
+        $unitDirectory->setAttribute('suffix', 'Test.php');
+        $unitDirectory->nodeValue = $moduleTestsPath . '/Unit';
+        $unitTestsuite->appendChild($unitDirectory);
+
+        $testsuites->appendChild($featureTestsuite);
+        $testsuites->appendChild($unitTestsuite);
+
+        $this->files->put($phpunitPath, $dom->saveXML());
+    }
 }

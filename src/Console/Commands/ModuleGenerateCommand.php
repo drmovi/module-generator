@@ -38,6 +38,7 @@ class ModuleGenerateCommand extends Command
         try {
             $this->generator->generate($vendor, $moduleName);
             $this->generator->updateRootComposer($vendor, $moduleName);
+            $this->generator->updatePhpunitXml($vendor, $moduleName);
             
             $this->info("Module {$name} generated successfully!");
             $this->info("Don't forget to run: composer update");
