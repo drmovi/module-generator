@@ -143,7 +143,8 @@ class ModuleGenerator
         $studlyName = Str::studly($moduleName);
         $namespace = ucfirst($vendor) . '\\' . $studlyName;
 
-        $featureTest = "<?php\n\nnamespace {$namespace}\\Tests\\Feature;\n\nuse Illuminate\\Foundation\\Testing\\RefreshDatabase;\nuse Tests\\TestCase;\n\nclass {$studlyName}Test extends TestCase\n{\n    public function test_{$moduleName}_module_works()\n    {\n        \$response = \$this->get('/{$moduleName}');\n        \$response->assertStatus(200);\n    }\n}\n";
+        $testMethodName = strtolower(str_replace('-', '_', $moduleName));
+        $featureTest = "<?php\n\nnamespace {$namespace}\\Tests\\Feature;\n\nuse Illuminate\\Foundation\\Testing\\RefreshDatabase;\nuse Tests\\TestCase;\n\nclass {$studlyName}Test extends TestCase\n{\n    public function test_{$testMethodName}_module_works()\n    {\n        \$response = \$this->get('/{$moduleName}');\n        \$response->assertStatus(200);\n    }\n}\n";
 
         $this->files->put($moduleDir . '/tests/Feature/' . $studlyName . 'Test.php', $featureTest);
 
